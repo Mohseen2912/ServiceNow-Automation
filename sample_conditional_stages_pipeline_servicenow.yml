@@ -1,0 +1,42 @@
+trigger:
+  branches:
+    include:
+      - main
+
+variables:
+  DeployProd: true
+
+stages:
+  - stage: dev
+    displayName: Dev
+    jobs:
+      - job: deploy_dev
+        steps:
+          - script: echo Deploying to dev
+
+  - ${{ if eq(variables['DeployProd'], 'true') }}:
+    - stage: prod
+      displayName: Prod
+      jobs:
+        - job: servicenow
+          variables:
+            authored_by: 'Automation Service Account'
+            service_offering: 'Payments Platform'
+            cmdb_ci: 'payments-api-prod'
+            owned_by: 'Platform Operations'
+          steps:
+            - script: echo ServiceNow job
+        - job: deploy_prod
+          steps:
+            - task: Company.Cherwell.Change@1
+              inputs:
+                environment: prod
+            - script: echo Deploying to prod
+
+  - ${{ else }}:
+    - stage: prod_skipped
+      displayName: Prod Skipped
+      jobs:
+        - job: skip_prod
+          steps:
+            - script: echo Prod deployment skipped

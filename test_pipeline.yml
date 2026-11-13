@@ -1,0 +1,55 @@
+trigger:
+  branches:
+    include:
+      - main
+
+stages:
+  - stage: dev
+    displayName: Dev
+    jobs:
+      - job: deploy_dev
+        displayName: Deploy Dev
+        steps:
+          - script: echo Deploying to dev
+
+  - stage: qa
+    displayName: QA
+    jobs:
+      - job: servicenow
+        variables:
+          authored_by: 'Automation Service Account'
+          service_offering: 'Payments Platform'
+          cmdb_ci: 'payments-api-prod'
+          owned_by: 'Platform Operations'
+        steps:
+          - script: echo ServiceNow job
+      - job: deploy_qa
+        displayName: Deploy QA
+        steps:
+          - task: QA.Cherwell.Validation@1
+            displayName: Create QA Cherwell task
+            inputs:
+              environment: qa
+              changeType: validation
+          - script: echo Deploying to qa
+
+  - stage: prod
+    displayName: Prod
+    jobs:
+      - job: servicenow
+        variables:
+          authored_by: 'Automation Service Account'
+          service_offering: 'Payments Platform'
+          cmdb_ci: 'payments-api-prod'
+          owned_by: 'Platform Operations'
+        steps:
+          - script: echo ServiceNow job
+      - job: deploy_prod
+        displayName: Deploy Prod
+        steps:
+          - task: Company.Cherwell.Change@1
+            displayName: Create Cherwell change
+            inputs:
+              environment: prod
+              changeType: standard
+          - script: echo Deploying to prod
